@@ -1,21 +1,104 @@
 plugins {
     id 'java'
     id("io.qameta.allure") version "3.0.1"
+    id 'jacoco'
+    id 'checkstyle'
+    id 'maven-publish'
 }
 
 group 'my.important.job'
-version '1.0-SNAPSHOT'
+version '1.0'
+
+ext {
+    nexusUrl = System.getenv("NEXUS_URL") ?: project.findProperty("nexus_url")
+    nexusUsername = System.getenv("NEXUS_USERNAME") ?: project.findProperty("nexus_user")
+    nexusPassword = System.getenv("NEXUS_PASSWORD") ?: project.findProperty("nexus_password")
+}
 
 repositories {
-    mavenCentral()
+    maven {
+        allowInsecureProtocol = true
+        url = "${nexusUrl}${nexus_maven_central}"
+        credentials {
+            username nexusUsername
+            password nexusPassword
+        }
+    }
+    maven {
+        allowInsecureProtocol = true
+        url = "${nexusUrl}${nexus_maven_releases}"
+        credentials {
+            username nexusUsername
+            password nexusPassword
+        }
+    }
+    maven {
+        allowInsecureProtocol = true
+        url = "${nexusUrl}${nexus_maven_snapshots}"
+        credentials {
+            username nexusUsername
+            password nexusPassword
+        }
+    }
 }
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     testImplementation("io.qameta.allure:allure-junit5:2.31.0")
+    implementation("org.postgresql:postgresql:42.7.8")
+}
+
+checkstyle {
+    toolVersion='10.12.4'
+    configFile = file("config/checkstyle/checkstyle.xml")
+}
+
+jacoco {
+    toolVersion = '0.8.13'
+}
+
+jacocoTestReport {
+    reports {
+        xml.required.set(false)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+    dependsOn test
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+        }
+    }
+    dependsOn test
 }
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            group group
+            artifactId 'haydar_test'
+            version version
+        }
+    }
+    repositories {
+        maven {
+            allowInsecureProtocol = true
+            url = version.endsWith("SNAPSHOT") ? "${nexusUrl}${nexus_maven_snapshots}" : "${nexusUrl}${nexus_maven_releases}"
+            credentials {
+                username nexusUsername
+                password nexusPassword
+            }
+        }
+    }
 }
