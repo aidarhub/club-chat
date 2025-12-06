@@ -18,13 +18,15 @@ public class PoolConnectionUtil {
         for (int i = 0; i < Integer.parseInt(poolSize); i++) {
             try {
                 Connection connection = DriverManager.getConnection(PropertiesUtil.get(PropertiesUtil.DB_URL).orElseThrow(),
-                        PropertiesUtil.get(PropertiesUtil.DB_USERNAME).orElseThrow(),"password");
+                        PropertiesUtil.get(PropertiesUtil.DB_USERNAME).orElseThrow(), "password");
                 CONNECTION_POOL.add(connection);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
     }
+
+    private PoolConnectionUtil() { }
 
     public static Connection receiveConnection() throws InterruptedException {
         while (true) {

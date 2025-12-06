@@ -19,7 +19,7 @@ public class UserDAOImpl implements Dao<User, Integer> {
          """;
 
     private static final String DROP_TABLE = """
-            DROP TABLE users
+            DROP TABLE users if not exists users
             """;
 
     private static final String FIND_All_MESSAGE = """
@@ -58,7 +58,7 @@ public class UserDAOImpl implements Dao<User, Integer> {
     }
 
     @Override
-    public User findById(Integer index) throws InterruptedException, SQLException {
+    public User findById(Integer index) throws InterruptedException {
         var connection = PoolConnectionUtil.receiveConnection();
         try (var statement = connection.prepareStatement(FIND_BY_ID_MESSAGE)) {
             statement.setInt(1, index);
@@ -78,6 +78,9 @@ public class UserDAOImpl implements Dao<User, Integer> {
             } else {
                 return null;
             }
+        } catch (SQLException e) {
+            System.err.println("SQLException in findById: " + e.getMessage());
+            throw new RuntimeException("Error retrieving message by ID " + index, e);
         } finally {
             PoolConnectionUtil.returnConnection(connection);
         }
@@ -110,7 +113,7 @@ public class UserDAOImpl implements Dao<User, Integer> {
     }
 
     @Override
-    public User update(User obj) throws InterruptedException, SQLException {
+    public void update(User obj) throws InterruptedException, SQLException {
         var connection = PoolConnectionUtil.receiveConnection();
         try (var statement = connection.prepareStatement(UPDATE_MESSAGE)) {
             statement.setString(2, obj.getLogin());
@@ -125,12 +128,7 @@ public class UserDAOImpl implements Dao<User, Integer> {
 
                 user.setLogin(login);
                 user.setEmail(email);
-
-                return user;
-            } else {
-                return null;
             }
-
         } finally {
             PoolConnectionUtil.returnConnection(connection);
         }
