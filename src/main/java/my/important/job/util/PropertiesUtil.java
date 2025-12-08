@@ -6,6 +6,9 @@ import java.util.Properties;
 
 public class PropertiesUtil {
     private static final Properties PROPERTIES = new Properties();
+
+    public static final String SERVER_PORT = "server.port";
+    public static final String SERVER_PORT_DEFAULT_VALUR = "8080";
     public static final String DB_USERNAME = "db.username";
     public static final String DB_PASSWORD = "db.password";
     public static final String DB_URL = "db.url";
