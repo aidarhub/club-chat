@@ -3,7 +3,6 @@ package my.important.job.entity;
 import my.important.job.dto.MessageFindDto;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 public class Message {
     private int messageId;

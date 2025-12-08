@@ -15,15 +15,15 @@ public class MessageDAOImpl implements Dao<Message, Integer> {
          id SERIAL PRIMARY KEY,
          text VARCHAR(255) NOT NULL,
          sender_id INTEGER NOT NULL,
-         FOREIGN KEY (sender_id) REFERENCES users (id),
          received_id INTEGER NOT NULL,
-         FOREIGN KEY (received_id) REFERENCES users (id),
-         create_time DATE NOT NULL
+         create_time DATE NOT NULL,
+         FOREIGN KEY (sender_id) REFERENCES users (id),
+         FOREIGN KEY (received_id) REFERENCES users (id)
          )
          """;
 
     private static final String DROP_TABLE = """
-            DROP TABLE message
+            DROP TABLE message if not exists message
             """;
 
     private static final String FIND_All_MESSAGE = """
@@ -47,8 +47,7 @@ public class MessageDAOImpl implements Dao<Message, Integer> {
 
     private static final String UPDATE_MESSAGE = """
             UPDATE message
-            SET 
-              id = ?,
+            SET
               text = ?,
               sender_id = ?,
               received_id = ?,
@@ -87,7 +86,7 @@ public class MessageDAOImpl implements Dao<Message, Integer> {
     }
 
     @Override
-    public Message findById(Integer index) throws InterruptedException, SQLException {
+    public Message findById(Integer index) throws InterruptedException {
         var connection = PoolConnectionUtil.receiveConnection();
         try (var statement = connection.prepareStatement(FIND_BY_ID_MESSAGE)) {
             statement.setInt(1, index);
@@ -111,6 +110,9 @@ public class MessageDAOImpl implements Dao<Message, Integer> {
             } else {
                 return null;
             }
+        } catch (SQLException e) {
+            System.err.println("SQLException in findById: " + e.getMessage());
+            throw new RuntimeException("Error retrieving message by ID " + index, e);
         } finally {
             PoolConnectionUtil.returnConnection(connection);
         }
@@ -147,10 +149,9 @@ public class MessageDAOImpl implements Dao<Message, Integer> {
     }
 
     @Override
-    public Message update(Message obj) throws InterruptedException, SQLException {
+    public void update(Message obj) throws InterruptedException, SQLException {
         var connection = PoolConnectionUtil.receiveConnection();
         try (var statement = connection.prepareStatement(UPDATE_MESSAGE)) {
-            statement.setInt(1, obj.getMessageId());
             statement.setString(2, obj.getText());
             statement.setInt(3, obj.getSenderId());
             statement.setInt(4, obj.getReceivedId());
@@ -161,23 +162,16 @@ public class MessageDAOImpl implements Dao<Message, Integer> {
             var message = new Message();
 
             if (execute.next()) {
-                var id = execute.getInt("id");
                 var text = execute.getString("text");
                 var senderId = execute.getInt("senderId");
                 var receivedId = execute.getInt("receivedId");
                 var createTime = execute.getDate("createTime");
 
-                message.setMessageId(id);
                 message.setText(text);
                 message.setSenderId(senderId);
                 message.setReceivedId(receivedId);
                 message.setCreateTime(createTime.toLocalDate());
-
-                return message;
-            } else {
-                return null;
             }
-
         } finally {
             PoolConnectionUtil.returnConnection(connection);
         }

@@ -22,7 +22,12 @@ public class MessageServiceImpl implements Service<MessageCreateDto, MessageFind
 
     @Override
     public MessageFindDto findById(Integer index) throws SQLException, InterruptedException {
-        return dao.findById(index).toDto();
+        Message message = dao.findById(index);
+        if (message == null) {
+            throw new RuntimeException("Сообщение с ID " + index + " не найдено.");
+        }
+
+        return message.toDto();
     }
 
     @Override
@@ -32,12 +37,24 @@ public class MessageServiceImpl implements Service<MessageCreateDto, MessageFind
 
     @Override
     public void update(MessageFindDto obj) throws SQLException, InterruptedException {
-        dao.update(obj.toEntity());
+        Message message = dao.findById(obj.id());
+
+        if (message == null) {
+            throw new RuntimeException("Сообщение с ID " + obj.id() + " не найдено.");
+        } else {
+            dao.update(obj.toEntity());
+        }
     }
 
     @Override
     public void deleteById(Integer index) throws SQLException, InterruptedException {
-        dao.deleteById(index);
+        Message message = dao.findById(index);
+
+        if (message == null) {
+            throw new RuntimeException("Сообщение с ID " + index + " не найдено.");
+        } else {
+            dao.deleteById(index);
+        }
     }
 
     @Override
